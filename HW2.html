@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+
+</style>
+</head>
+
+<body>
+<div id="info">Homework 2<br>Character Animation
+<br>
+<button>
+Switch View
+</button>
+</div>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+</script>
+
+
+<script>
+var camera, scene, renderer;
+const WW = 4;
+const HH = 12;
+var head, torso, lLeg, rLeg,lhand,rhand;
+var theta = 0;
+
+/////////////////////////////
+var pose1 = {
+	lThigh: Math.PI/6,
+  rThigh: -Math.PI/6
+}
+var pose2 = {
+	lThigh: -Math.PI/6,
+  rThigh: +Math.PI/6
+}
+var keys = [
+  [0, pose1],
+  [0.5, pose2],
+  [1, pose1]
+];
+var T = 1;
+var clock = new THREE.Clock();
+var ts = clock.getElapsedTime();
+
+function keyframe(t) {
+  var s = ((t - ts) % T) / T;
+
+  for (var i = 1; i < keys.length; i++) {
+    if (keys[i][0] > s) break;
+  }
+  // take i-1
+  var ii = i - 1;
+  var a = (s - keys[ii][0]) / (keys[ii + 1][0] - keys[ii][0]);
+  intKey = [keys[ii][1].lThigh * (1 - a) + keys[ii + 1][1].lThigh * a,
+            keys[ii][1].rThigh * (1 - a) + keys[ii + 1][1].rThigh * a
+  ];
+	return intKey;
+}
+
+//////////////////////////////
+init();
+animate();
+
+function init() {
+
+  scene = new THREE.Scene();
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.z = 500;
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  ////////////////////////////////////////////////////////////////
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXZ);
+
+	head = buildHead();
+  torso = buildTorso();
+  torso.add (head);
+  head.position.y = HH;
+  scene.add (torso);
+  torso.position.set (0, HH, 0);
+  //leg
+	lLeg = buildLLeg();
+  torso.add (lLeg);
+  lLeg.position.set (WW/2, 0, 0);
+	rLeg = buildRLeg();
+  torso.add (rLeg);
+  rLeg.position.set (-WW/2, 0, 0);
+  //hand
+  lhand = buildLhand();
+  torso.add (lhand);
+  lhand.position.set (6, 9, 0);
+	rhand = buildRhand();
+  torso.add (rhand);
+  rhand.position.set (-6, 9, 0);
+  //////////////////////////////////////
+  /// pose
+//  head.rotation.y = Math.PI/6;
+  lLeg.rotation.x = Math.PI/6;
+  rLeg.rotation.x = -Math.PI/6;
+  lhand.rotation.x = Math.PI/6;
+  rhand.rotation.x = -Math.PI/6;
+}
+
+function buildHead() {
+	let head = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(2*WW,2*WW,2*WW), new THREE.MeshNormalMaterial());
+  head.add (mesh);
+  mesh.position.y = WW;
+  return head;
+}
+
+function buildLLeg() {
+	let lLeg = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(WW,HH,WW), new THREE.MeshNormalMaterial());
+  lLeg.add (mesh);
+  mesh.position.y = -HH/2;
+  return lLeg;
+}
+function buildRLeg() {
+	let rLeg = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(WW,HH,WW), new THREE.MeshNormalMaterial());
+  rLeg.add (mesh);
+  mesh.position.y = -HH/2;
+  return rLeg;
+}
+
+function buildTorso() {
+	let torso = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(2*WW,HH,WW), new THREE.MeshNormalMaterial());
+  torso.add (mesh);
+  mesh.position.y = HH/2;
+
+	return torso;
+}
+
+function buildLhand() {
+	let lhand = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(3,10,WW), new THREE.MeshNormalMaterial());
+  lhand.add (mesh);
+  mesh.position.y = -HH/2;
+  return lhand;
+}
+function buildRhand() {
+	let rhand = new THREE.Group();
+  let mesh = new THREE.Mesh (new THREE.BoxGeometry(3,10,WW), new THREE.MeshNormalMaterial());
+  rhand.add (mesh);
+  mesh.position.y = -HH/2;
+  return rhand;
+}
+
+function animate() {
+
+  requestAnimationFrame(animate);
+  render();
+
+  let dt = clock.getDelta();
+  let R = 50;
+  let omega = HH/R/T;  
+  theta += omega*dt;
+  torso.position.set (R*Math.cos(theta), HH, -R*Math.sin(theta));
+  torso.rotation.y = Math.PI + theta;
+
+	let intKey = keyframe(clock.getElapsedTime());
+  lLeg.rotation.x = intKey[0];
+  rLeg.rotation.x = intKey[1]; 
+  lhand.rotation.x = intKey[1];
+  rhand.rotation.x = intKey[0];
+}
+
+function render() {
+
+  renderer.render(scene, camera);
+
+}
+
+
+</script>
+</body>
+
+</html>
